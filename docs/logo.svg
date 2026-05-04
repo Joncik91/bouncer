@@ -51,8 +51,4 @@
     <line x1="306" y1="278" x2="338" y2="278"/>
   </g>
 
-  <!-- The always-on core: a single small emerald dot pinned on the post
-       at the threshold height. The one rule that escapes gating — and
-       the only non-amber colour in the mark, used once, deliberately. -->
-  <circle cx="124" cy="206" r="7" fill="#58D070"/>
 </svg>
