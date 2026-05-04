@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/logo.svg" alt="bouncer" width="160" height="160">
+<img src="docs/logo.png" alt="bouncer" width="160" height="160">
 
 # bouncer
 
