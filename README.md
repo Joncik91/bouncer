@@ -1,14 +1,45 @@
+<div align="center">
+
+<img src="docs/logo.svg" alt="bouncer" width="160" height="160">
+
 # bouncer
 
-> **Predicate-gated rule injection for long-running LLM sessions.**
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-E8954A.svg)](LICENSE)
+[![Local-first](https://img.shields.io/badge/local--first-✓-58D070)](https://www.inkandswitch.com/local-first/)
+[![No build step](https://img.shields.io/badge/no%20build%20step-✓-58D070)]()
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-E8954A.svg)](#contributing)
+[![Standard README](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg)](https://github.com/RichardLitt/standard-readme)
+
+**Predicate-gated rule injection for long-running LLM sessions.**
 
 A small daemon that decides which behavioural rules from a markdown directory
 are relevant to the current user prompt, and returns just those — keeping the
 per-prompt context bounded as your rule library grows.
 
+</div>
+
 Built for [Claude Code](https://docs.claude.com/en/docs/claude-code/overview)
 sessions, but works with any LLM agent that has a hook or middleware capable
 of mutating the system context per prompt.
+
+## Table of Contents
+
+- [The problem](#the-problem)
+- [The pattern (cross-domain)](#the-pattern-cross-domain)
+- [Architecture](#architecture)
+- [Installation](#installation)
+- [Usage](#usage)
+- [API](#api)
+- [Routing pipeline](#routing-pipeline)
+- [Configuration](#configuration)
+- [Testing](#testing)
+- [Why a daemon](#why-a-daemon)
+- [Security](#security)
+- [Status](#status)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## The problem
 
@@ -221,11 +252,39 @@ prohibitive. The daemon keeps the model resident; a hook hits localhost in
 under 50 ms per request after warm-up. Use `systemctl --user` or similar for
 non-root setups.
 
+## Security
+
+**Do not expose this daemon to the public internet.** Two reasons:
+
+1. The rules directory may quote secrets, paths, hostnames, or other
+   project-internal context that you wouldn't put in a public Slack channel.
+   `/route` returns the matched rules' `trigger` summaries, not the bodies —
+   but a misconfigured rule could still leak.
+2. The semantic encoder is happy to embed any string the caller posts. A
+   public `/route` endpoint is a free embedding service for whoever finds it.
+
+The default bind is `127.0.0.1:8765`. Switching to `--host 0.0.0.0` requires
+explicit intent — make sure your firewall scopes the port to trusted networks
+(LAN, Tailscale, WireGuard).
+
 ## Status
 
 v0.1 — works on the creator's box. Open-sourcing for early feedback.
 Single-machine. No persistence (rules reloaded fresh each daemon start).
 
+## Contributing
+
+PRs welcome. The daemon is intentionally small (single Python file, stdlib +
+FastAPI + sentence-transformers) — keep it that way. Useful directions:
+
+- More predicate styles (regex over conversation history, time-of-day,
+  filesystem state) — the routing pipeline is designed to accept new passes.
+- Per-platform hook recipes (`examples/hooks/`) for non-Claude-Code agents.
+- Replay-based threshold tuning UX — `test-replay.py` is the seed.
+
+This README follows the [Standard README](https://github.com/RichardLitt/standard-readme)
+specification.
+
 ## License
 
-MIT.
+MIT © Joncik91. See [LICENSE](LICENSE).
