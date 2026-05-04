@@ -1,31 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="bouncer">
   <title>bouncer</title>
-
   <rect width="400" height="400" rx="48" fill="#0E0E0F"/>
 
-  <line x1="56" y1="206" x2="344" y2="206"
-        stroke="#E8954A" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+  <!-- Two stanchions: round top "ball" + vertical post + base plate -->
+  <g fill="#E8954A">
+    <!-- Left stanchion -->
+    <circle cx="100" cy="160" r="22"/>
+    <rect x="92" y="170" width="16" height="150" rx="2"/>
+    <rect x="68" y="316" width="64" height="14" rx="2"/>
 
-  <g fill="none" stroke="#E8954A" stroke-width="32"
-     stroke-linecap="round" stroke-linejoin="round">
-    <line x1="124" y1="100" x2="124" y2="312"/>
-    <path d="M 124 100
-             H 220
-             A 53 53 0 0 1 220 206
-             H 124"/>
-    <path d="M 124 206
-             H 232
-             A 53 53 0 0 1 232 312
-             H 124"/>
+    <!-- Right stanchion -->
+    <circle cx="300" cy="160" r="22"/>
+    <rect x="292" y="170" width="16" height="150" rx="2"/>
+    <rect x="268" y="316" width="64" height="14" rx="2"/>
   </g>
 
-  <!-- Tally marks: varied lengths suggest real K=3 admission rhythm,
-       not a uniform tick row. Order: short, long, short — the middle
-       admit is the highest-scored, flanking ones lower-confidence. -->
-  <g stroke="#E8954A" stroke-linecap="round">
-    <line x1="306" y1="240" x2="332" y2="240" stroke-width="6" opacity="0.7"/>
-    <line x1="306" y1="259" x2="338" y2="259" stroke-width="7" opacity="0.95"/>
-    <line x1="306" y1="278" x2="328" y2="278" stroke-width="6" opacity="0.7"/>
-  </g>
+  <!-- The velvet rope: catenary droop between the two stanchion balls.
+       Anchor points just inside each ball, drooping ~70 units below
+       the line between them. Heavy stroke for that thick-rope feel. -->
+  <path d="M 100 160 Q 200 280 300 160"
+        fill="none" stroke="#E8954A" stroke-width="14"
+        stroke-linecap="round"/>
 </svg>
