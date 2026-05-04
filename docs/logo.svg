@@ -2,54 +2,57 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="bouncer">
   <title>bouncer</title>
 
-  <!-- Field.io substrate, same as the rest of the portfolio -->
+  <!-- Substrate. Same language as the cc-session-browser sibling. -->
   <rect width="400" height="400" rx="48" fill="#0E0E0F"/>
 
-  <!-- Subtle horizontal bands marking the velvet-rope tiers -->
-  <g stroke="#1B1B20" stroke-width="1">
-    <line x1="60"  y1="120" x2="340" y2="120"/>
-    <line x1="60"  y1="280" x2="340" y2="280"/>
+  <!-- A single amber threshold runs the full width at the optical centre,
+       just below the geometric centre so it lands where the eye expects it.
+       This is the rope. Everything else is the monogram pivoting around it. -->
+  <line x1="56" y1="206" x2="344" y2="206"
+        stroke="#E8954A" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+
+  <!-- Monogram B as a turnstile.
+       The vertical stem is the post. The two stacked bowls are gate-arms
+       that have rotated *through* the threshold: the upper bowl sits above
+       the rope (closed), the lower bowl sits below (admitting). Together
+       they make a bold, recognisable B that also reads as a gate.
+
+       Stroke-based construction so the form stays crisp at 32px. -->
+  <g fill="none" stroke="#E8954A" stroke-width="32"
+     stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- Vertical post. Slightly inset from top/bottom so it doesn't kiss
+         the rounded panel edge. -->
+    <line x1="124" y1="100" x2="124" y2="312"/>
+
+    <!-- Upper bowl: half-circle from the post out to the right and back.
+         Sits entirely above the threshold. -->
+    <path d="M 124 100
+             H 220
+             A 53 53 0 0 1 220 206
+             H 124"/>
+
+    <!-- Lower bowl: half-circle below the threshold. Slightly larger
+         radius than the upper bowl — the optical-correction trick that
+         makes a B look balanced. -->
+    <path d="M 124 206
+             H 232
+             A 53 53 0 0 1 232 312
+             H 124"/>
   </g>
 
-  <!-- Inbound rules: a column of small markers above the rope -->
-  <g fill="#4F4F56">
-    <rect x="78"  y="68" width="14" height="14" rx="2"/>
-    <rect x="106" y="68" width="14" height="14" rx="2"/>
-    <rect x="134" y="68" width="14" height="14" rx="2"/>
-    <rect x="162" y="68" width="14" height="14" rx="2"/>
-    <rect x="190" y="68" width="14" height="14" rx="2"/>
-    <rect x="218" y="68" width="14" height="14" rx="2"/>
-    <rect x="246" y="68" width="14" height="14" rx="2"/>
-    <rect x="274" y="68" width="14" height="14" rx="2"/>
-    <rect x="302" y="68" width="14" height="14" rx="2"/>
+  <!-- Three admitted rays, sized to suggest K=3 without labelling.
+       Short, precisely aligned, sitting just past the lower bowl's
+       outer edge. They read as three short tally marks at small sizes
+       and as 'three things admitted' at full size. -->
+  <g stroke="#E8954A" stroke-width="6" stroke-linecap="round" opacity="0.85">
+    <line x1="306" y1="240" x2="338" y2="240"/>
+    <line x1="306" y1="259" x2="338" y2="259"/>
+    <line x1="306" y1="278" x2="338" y2="278"/>
   </g>
 
-  <!-- The rope: amber filter line, the gate -->
-  <line x1="60" y1="120" x2="340" y2="120" stroke="#E8954A" stroke-width="2.5" stroke-linecap="round"/>
-
-  <!-- Three amber markers admitted (K=3 cap) -->
-  <g>
-    <rect x="134" y="142" width="14" height="14" rx="2" fill="#E8954A"/>
-    <rect x="190" y="142" width="14" height="14" rx="2" fill="#E8954A"/>
-    <rect x="246" y="142" width="14" height="14" rx="2" fill="#E8954A"/>
-  </g>
-
-  <!-- Always-on core: a pinned pill below the cap, set apart -->
-  <g transform="translate(150 200)">
-    <rect width="100" height="44" rx="22" fill="#16161A" stroke="#E8954A" stroke-width="1.5"/>
-    <circle cx="22" cy="22" r="5" fill="#E8954A"/>
-    <rect x="38" y="14" width="48" height="6" rx="2" fill="#E8954A"/>
-    <rect x="38" y="26" width="40" height="5" rx="2" fill="#7A7A82"/>
-  </g>
-
-  <!-- Outbound: the per-prompt context window receiving 3 + always-core -->
-  <g transform="translate(60 296)">
-    <rect width="280" height="44" rx="6" fill="#131318" stroke="#232327" stroke-width="1"/>
-    <circle cx="22" cy="22" r="3" fill="#E8954A"/>
-    <rect x="44" y="14" width="78" height="6" rx="2" fill="#E8954A"/>
-    <rect x="130" y="14" width="38" height="6" rx="2" fill="#E8954A"/>
-    <rect x="174" y="14" width="38" height="6" rx="2" fill="#E8954A"/>
-    <rect x="218" y="14" width="38" height="6" rx="2" fill="#E8954A"/>
-    <rect x="44" y="26" width="216" height="5" rx="2" fill="#4F4F56"/>
-  </g>
+  <!-- The always-on core: a single small emerald dot pinned on the post
+       at the threshold height. The one rule that escapes gating — and
+       the only non-amber colour in the mark, used once, deliberately. -->
+  <circle cx="124" cy="206" r="7" fill="#58D070"/>
 </svg>
