@@ -29,6 +29,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+from contextlib import asynccontextmanager
 from pathlib import Path
 from threading import Lock
 from typing import Any
@@ -47,18 +48,25 @@ MODEL_NAME = os.environ.get("MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v
 DEFAULT_THRESHOLD = float(os.environ.get("DEFAULT_THRESHOLD", "0.35"))
 TOP_K = int(os.environ.get("TOP_K", "3"))
 
-FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
+FRONTMATTER_RE = re.compile(r"^---\r?\n(.*?)\r?\n---\r?\n", re.DOTALL)
 
 
-def parse_frontmatter(text: str) -> dict[str, Any]:
+def parse_frontmatter(text: str, source: str = "<unknown>") -> dict[str, Any]:
     m = FRONTMATTER_RE.match(text)
     if not m:
         return {}
     try:
-        return yaml.safe_load(m.group(1)) or {}
+        parsed = yaml.safe_load(m.group(1)) or {}
     except Exception as e:
         log.warning("frontmatter parse failed: %s", e)
         return {}
+    if not isinstance(parsed, dict):
+        log.warning(
+            "rule %s: frontmatter is not a mapping (got %s); ignoring",
+            source, type(parsed).__name__,
+        )
+        return {}
+    return parsed
 
 
 def _extract_trigger_fallback(text: str) -> str:
@@ -97,7 +105,7 @@ def load_rules() -> tuple[list[dict], list[dict], list[dict]]:
     for md in sorted(RULES_DIR.rglob("*.md")):
         rel = md.relative_to(RULES_DIR)
         text = md.read_text()
-        fm = parse_frontmatter(text)
+        fm = parse_frontmatter(text, source=str(rel))
         # Default activation: rules under _always/ are always; others semantic.
         default_activation = "always" if rel.parts[0] == "_always" else "semantic"
         activation = fm.get("activation", default_activation)
@@ -105,7 +113,14 @@ def load_rules() -> tuple[list[dict], list[dict], list[dict]]:
         utterances = fm.get("trigger_utterances", []) or []
         keywords_raw = fm.get("trigger_keywords", []) or []
         keywords = _compile_keywords(keywords_raw, md.stem)
-        threshold = float(fm.get("score_threshold", DEFAULT_THRESHOLD))
+        try:
+            threshold = float(fm.get("score_threshold", DEFAULT_THRESHOLD))
+        except (ValueError, TypeError) as e:
+            log.warning(
+                "rule %s: invalid score_threshold %r: %s; falling back to default %s",
+                md.stem, fm.get("score_threshold"), e, DEFAULT_THRESHOLD,
+            )
+            threshold = DEFAULT_THRESHOLD
 
         rule = {
             "slug": md.stem,
@@ -239,12 +254,13 @@ class HealthResponse(BaseModel):
     invalid: int
 
 
-app = FastAPI(title="rule-router")
-
-
-@app.on_event("startup")
-def _startup():
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
     state.reload()
+    yield
+
+
+app = FastAPI(title="rule-router", lifespan=_lifespan)
 
 
 @app.get("/healthz", response_model=HealthResponse)
@@ -267,9 +283,21 @@ def reload_rules():
 def route(req: RouteRequest):
     import numpy as np
 
+    # Copy the references we need under the lock, then release it before
+    # doing any matching/inference work. /reload rebuilds these together
+    # (rule_vecs is indexed in lockstep with rules_with_utterances), so a
+    # torn read across two different reload generations must be avoided —
+    # but the lock must never be held across embedding or matching.
+    with state.lock:
+        always = state.always
+        semantic = state.semantic
+        rule_vecs = state.rule_vecs
+        encoder = state.encoder
+        rules_with_utterances = state.rules_with_utterances
+
     always_out = [
         RuleOut(slug=r["slug"], path=r["path"], trigger=r["trigger"], activation="always")
-        for r in state.always
+        for r in always
     ]
 
     matched: dict[str, RuleOut] = {}  # slug → RuleOut, for dedup
@@ -296,7 +324,7 @@ def route(req: RouteRequest):
     if prompt_stripped and not is_system_meta:
         # --- Pass 1: keyword pre-pass over all semantic rules ---
         keyword_hit_slugs: set[str] = set()
-        for rule in state.semantic:
+        for rule in semantic:
             if not rule["keywords"]:
                 continue
             if any(kw.search(req.prompt) for kw in rule["keywords"]):
@@ -324,16 +352,16 @@ def route(req: RouteRequest):
             length_bump = 0.02
         else:
             length_bump = 0.0
-        if state.rule_vecs is not None and state.encoder is not None and word_count >= 4:
+        if rule_vecs is not None and encoder is not None and word_count >= 4:
             try:
-                qv = np.array(state.encoder([req.prompt]), dtype=np.float32)[0]
+                qv = np.array(encoder([req.prompt]), dtype=np.float32)[0]
                 qn = np.linalg.norm(qv)
                 if qn > 0:
                     qv = qv / qn
-                sims = state.rule_vecs @ qv  # shape (R,)
+                sims = rule_vecs @ qv  # shape (R,)
                 # Score every semantic-rule that has utterances and isn't keyword-matched.
                 scored = []
-                for i, rule in enumerate(state.rules_with_utterances):
+                for i, rule in enumerate(rules_with_utterances):
                     if rule["slug"] in keyword_hit_slugs:
                         continue
                     sim = float(sims[i])

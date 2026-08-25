@@ -16,5 +16,17 @@ RestartSec=5
 StandardOutput=append:/var/log/bouncer.log
 StandardError=append:/var/log/bouncer.log
 
+# Sandboxing — customise these for your install (User/Group and
+# ReadWritePaths must match the account and log path you actually use).
+# Binding to 127.0.0.1 does not isolate /route from other local users on a
+# shared machine; this sandboxing is the actual isolation boundary.
+User=bouncer
+Group=bouncer
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log
+
 [Install]
 WantedBy=multi-user.target

@@ -267,6 +267,12 @@ The default bind is `127.0.0.1:8765`. Switching to `--host 0.0.0.0` requires
 explicit intent — make sure your firewall scopes the port to trusted networks
 (LAN, Tailscale, WireGuard).
 
+**Binding to `127.0.0.1` does not isolate the endpoint from other local users
+on a shared/multi-user machine** — any local account can still reach it. Run
+the daemon as a dedicated non-root user and use the sandboxing directives
+(`User=`, `NoNewPrivileges=`, `ProtectSystem=strict`, etc.) in
+`examples/bouncer.service` for real isolation.
+
 ## Status
 
 v0.1 — works on the creator's box. Open-sourcing for early feedback.
