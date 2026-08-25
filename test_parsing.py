@@ -6,7 +6,6 @@ Run with:
 """
 import logging
 
-import pytest
 
 import server
 

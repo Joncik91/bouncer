@@ -10,16 +10,30 @@ Environment=RULES_DIR=/opt/bouncer/rules
 Environment=MODEL_NAME=sentence-transformers/all-MiniLM-L6-v2
 Environment=DEFAULT_THRESHOLD=0.35
 Environment=TOP_K=3
+# HuggingFaceEncoder resolves its cache under $HF_HOME (falls back to
+# ~/.cache/huggingface). ProtectHome=true below masks the real home dir and
+# ProtectSystem=strict makes everything else read-only, so the cache needs an
+# explicit writable path. StateDirectory=bouncer has systemd create and chown
+# /var/lib/bouncer to User/Group and adds it to the write allow-list for you.
+Environment=HF_HOME=/var/lib/bouncer
+StateDirectory=bouncer
 ExecStart=/opt/bouncer/.venv/bin/uvicorn server:app --host 127.0.0.1 --port 8765 --log-level warning
 Restart=always
 RestartSec=5
 StandardOutput=append:/var/log/bouncer.log
 StandardError=append:/var/log/bouncer.log
 
-# Sandboxing — customise these for your install (User/Group and
-# ReadWritePaths must match the account and log path you actually use).
-# Binding to 127.0.0.1 does not isolate /route from other local users on a
-# shared machine; this sandboxing is the actual isolation boundary.
+# Sandboxing — customise these for your install (User/Group, ReadWritePaths,
+# and the WorkingDirectory/.venv above must all be readable/writable by the
+# account you actually use). This constrains what a compromised or buggy
+# daemon process can touch on the box — it does NOT restrict who can connect
+# to /route. Binding to 127.0.0.1 does not isolate /route from other local
+# users on a shared machine, and /route has no authentication: any local
+# account can still reach it and trigger embedding/rule-matching work. If you
+# need to restrict local access, put the daemon behind a unix socket with
+# 0600 permissions, a firewall rule that matches on the connecting UID/owner,
+# or a shared-secret header checked in front of /route — none of that is
+# implemented here yet.
 User=bouncer
 Group=bouncer
 NoNewPrivileges=true
