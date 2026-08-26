@@ -267,6 +267,17 @@ The default bind is `127.0.0.1:8765`. Switching to `--host 0.0.0.0` requires
 explicit intent — make sure your firewall scopes the port to trusted networks
 (LAN, Tailscale, WireGuard).
 
+**Binding to `127.0.0.1` does not isolate the endpoint from other local users
+on a shared/multi-user machine** — any local account can still reach it, and
+`/route` has no authentication at all. The sandboxing directives (`User=`,
+`NoNewPrivileges=`, `ProtectSystem=strict`, etc.) in `examples/bouncer.service`
+limit what the daemon process itself can do on the box (filesystem access,
+privilege escalation) — they do **not** restrict who can connect to it. If you
+need to restrict which local users can reach `/route`, put the daemon behind
+a unix socket with `0600` permissions, a firewall rule that matches on the
+connecting UID/owner, or a shared-secret header in front of the endpoint —
+none of that is implemented here yet.
+
 ## Status
 
 v0.1 — works on the creator's box. Open-sourcing for early feedback.
